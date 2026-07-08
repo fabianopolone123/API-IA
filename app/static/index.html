@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>API-IA · Console de Testes</title>
+  <style>
+    :root {
+      --bg: #0f1115; --panel: #181b22; --panel2: #1f232c; --border: #2a2f3a;
+      --text: #e6e9ef; --muted: #9aa4b2; --accent: #10a37f; --accent2: #0d8a6a;
+      --danger: #e5534b; --ok: #10a37f; --warn: #d9a441; --radius: 12px;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0; font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+      background: var(--bg); color: var(--text); line-height: 1.5;
+    }
+    header {
+      display: flex; align-items: center; justify-content: space-between; gap: 16px;
+      padding: 16px 24px; background: var(--panel); border-bottom: 1px solid var(--border);
+      position: sticky; top: 0; z-index: 10; flex-wrap: wrap;
+    }
+    header h1 { font-size: 18px; margin: 0; display: flex; align-items: center; gap: 10px; }
+    .logo { width: 28px; height: 28px; border-radius: 7px; background: linear-gradient(135deg,var(--accent),#1fd1a3);
+            display: grid; place-items: center; font-weight: 800; color: #04120d; }
+    .health {
+      display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--muted);
+      background: var(--panel2); border: 1px solid var(--border); padding: 6px 12px; border-radius: 999px;
+    }
+    .dot { width: 10px; height: 10px; border-radius: 50%; background: var(--muted); }
+    .dot.ok { background: var(--ok); box-shadow: 0 0 0 3px rgba(16,163,127,.18); }
+    .dot.bad { background: var(--danger); box-shadow: 0 0 0 3px rgba(229,83,75,.18); }
+    .dot.wait { background: var(--warn); }
+    main { max-width: 1100px; margin: 0 auto; padding: 24px; display: grid;
+           grid-template-columns: 1fr 1fr; gap: 20px; }
+    @media (max-width: 860px) { main { grid-template-columns: 1fr; } }
+    .card { background: var(--panel); border: 1px solid var(--border); border-radius: var(--radius); padding: 18px; }
+    .card h2 { font-size: 14px; text-transform: uppercase; letter-spacing: .04em; color: var(--muted);
+               margin: 0 0 14px; font-weight: 600; }
+    label { display: block; font-size: 13px; color: var(--muted); margin: 12px 0 6px; }
+    input, textarea, select {
+      width: 100%; background: var(--panel2); border: 1px solid var(--border); color: var(--text);
+      border-radius: 9px; padding: 10px 12px; font-size: 14px; font-family: inherit; outline: none;
+    }
+    input:focus, textarea:focus, select:focus { border-color: var(--accent); }
+    textarea { resize: vertical; min-height: 120px; }
+    .row { display: flex; gap: 10px; align-items: flex-start; }
+    .row .grow { flex: 1; }
+    button {
+      background: var(--accent); color: #04120d; border: none; border-radius: 9px; padding: 11px 18px;
+      font-size: 14px; font-weight: 700; cursor: pointer; transition: background .15s;
+    }
+    button:hover { background: var(--accent2); }
+    button:disabled { opacity: .5; cursor: not-allowed; }
+    button.ghost { background: transparent; color: var(--text); border: 1px solid var(--border); font-weight: 500; }
+    button.ghost:hover { background: var(--panel2); }
+    button.mini { padding: 6px 10px; font-size: 12px; }
+    .ctx-item { background: var(--panel2); border: 1px solid var(--border); border-radius: 9px;
+                padding: 10px; margin-bottom: 10px; }
+    .ctx-item .row { align-items: center; margin-bottom: 8px; }
+    .ctx-item select { width: 140px; }
+    .actions { display: flex; gap: 10px; margin-top: 16px; align-items: center; flex-wrap: wrap; }
+    .hint { font-size: 12px; color: var(--muted); margin-top: 6px; }
+    .response {
+      white-space: pre-wrap; word-wrap: break-word; background: var(--panel2);
+      border: 1px solid var(--border); border-radius: 9px; padding: 14px; min-height: 120px;
+      font-size: 14px;
+    }
+    .meta { display: flex; gap: 16px; font-size: 12px; color: var(--muted); margin-top: 10px; flex-wrap: wrap; }
+    .badge { padding: 2px 8px; border-radius: 6px; font-size: 12px; font-weight: 600; }
+    .badge.ok { background: rgba(16,163,127,.15); color: #4fd6b0; }
+    .badge.err { background: rgba(229,83,75,.15); color: #f08a84; }
+    details { margin-top: 12px; }
+    details summary { cursor: pointer; color: var(--muted); font-size: 13px; }
+    pre { background: #0b0d11; border: 1px solid var(--border); border-radius: 8px; padding: 12px;
+          overflow-x: auto; font-size: 12px; color: #b9c2d0; }
+    .spinner { width: 16px; height: 16px; border: 2px solid rgba(255,255,255,.25);
+               border-top-color: #fff; border-radius: 50%; animation: spin .7s linear infinite; display: inline-block; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .collapsible-body { margin-top: 8px; }
+    footer { text-align: center; color: var(--muted); font-size: 12px; padding: 20px; }
+    a { color: var(--accent); }
+  </style>
+</head>
+<body>
+  <header>
+    <h1><span class="logo">IA</span> API-IA · Console de Testes</h1>
+    <div class="health">
+      <span class="dot wait" id="healthDot"></span>
+      <span id="healthText">verificando…</span>
+      <button class="ghost mini" id="btnHealth" style="margin-left:6px">Atualizar</button>
+    </div>
+  </header>
+
+  <main>
+    <!-- Coluna esquerda: requisição -->
+    <section class="card">
+      <h2>Requisição</h2>
+
+      <details id="configBox">
+        <summary>⚙️ Conexão &amp; autenticação</summary>
+        <div class="collapsible-body">
+          <label for="baseUrl">Base URL da API</label>
+          <input id="baseUrl" placeholder="(vazio = mesmo servidor desta página)" />
+          <div class="hint">Deixe vazio para usar o próprio servidor. Ex.: <code>http://SEU_IP:8000</code></div>
+          <label for="apiKey">X-API-Key (se configurada no .env)</label>
+          <input id="apiKey" type="password" placeholder="opcional" />
+        </div>
+      </details>
+
+      <label for="prompt">Prompt (pergunta atual)</label>
+      <textarea id="prompt" placeholder="Ex.: Explique o que é uma API em uma frase.">Explique o que é uma API em uma frase.</textarea>
+
+      <label>Contexto (histórico opcional)</label>
+      <div id="ctxList"></div>
+      <button class="ghost mini" id="btnAddCtx">+ Adicionar mensagem de contexto</button>
+
+      <div class="actions">
+        <button id="btnSend">▶ Enviar para /chat</button>
+        <button class="ghost" id="btnClear">Limpar resposta</button>
+        <span id="sendStatus" class="hint"></span>
+      </div>
+    </section>
+
+    <!-- Coluna direita: resposta -->
+    <section class="card">
+      <h2>Resposta</h2>
+      <div class="response" id="responseBox">A resposta da IA aparecerá aqui.</div>
+      <div class="meta" id="metaBox"></div>
+      <details>
+        <summary>Ver requisição e resposta cruas (JSON)</summary>
+        <div class="collapsible-body">
+          <strong style="font-size:12px;color:var(--muted)">Enviado:</strong>
+          <pre id="rawReq">—</pre>
+          <strong style="font-size:12px;color:var(--muted)">Recebido:</strong>
+          <pre id="rawResp">—</pre>
+        </div>
+      </details>
+    </section>
+  </main>
+
+  <footer>
+    API-IA — automação do ChatGPT via Selenium · <a href="/docs" target="_blank">Documentação Swagger (/docs)</a>
+  </footer>
+
+  <script>
+    const $ = (id) => document.getElementById(id);
+    const base = () => $("baseUrl").value.trim().replace(/\/$/, "");
+    const headers = () => {
+      const h = { "Content-Type": "application/json" };
+      const k = $("apiKey").value.trim();
+      if (k) h["X-API-Key"] = k;
+      return h;
+    };
+
+    // ---- Contexto dinâmico ----
+    function addCtx(role = "user", content = "") {
+      const div = document.createElement("div");
+      div.className = "ctx-item";
+      div.innerHTML = `
+        <div class="row">
+          <select class="ctx-role">
+            <option value="user">user</option>
+            <option value="assistant">assistant</option>
+            <option value="system">system</option>
+          </select>
+          <div class="grow"></div>
+          <button class="ghost mini ctx-del">✕ remover</button>
+        </div>
+        <textarea class="ctx-content" style="min-height:60px" placeholder="conteúdo da mensagem"></textarea>`;
+      div.querySelector(".ctx-role").value = role;
+      div.querySelector(".ctx-content").value = content;
+      div.querySelector(".ctx-del").onclick = () => div.remove();
+      $("ctxList").appendChild(div);
+    }
+    function getContext() {
+      return [...document.querySelectorAll(".ctx-item")].map((el) => ({
+        role: el.querySelector(".ctx-role").value,
+        content: el.querySelector(".ctx-content").value,
+      })).filter((m) => m.content.trim() !== "");
+    }
+    $("btnAddCtx").onclick = () => addCtx();
+
+    // ---- Health ----
+    async function checkHealth() {
+      const dot = $("healthDot"), txt = $("healthText");
+      dot.className = "dot wait"; txt.textContent = "verificando…";
+      try {
+        const r = await fetch(base() + "/health", { headers: headers() });
+        const j = await r.json();
+        if (j.status === "ok" && j.browser_ready) {
+          dot.className = "dot ok"; txt.textContent = "online · browser pronto";
+        } else if (j.status === "ok") {
+          dot.className = "dot bad"; txt.textContent = "online · browser NÃO pronto";
+        } else {
+          dot.className = "dot bad"; txt.textContent = "resposta inesperada";
+        }
+      } catch (e) {
+        dot.className = "dot bad"; txt.textContent = "offline / inacessível";
+      }
+    }
+    $("btnHealth").onclick = checkHealth;
+
+    // ---- Enviar /chat ----
+    $("btnClear").onclick = () => {
+      $("responseBox").textContent = "A resposta da IA aparecerá aqui.";
+      $("metaBox").innerHTML = ""; $("rawReq").textContent = "—"; $("rawResp").textContent = "—";
+    };
+
+    $("btnSend").onclick = async () => {
+      const prompt = $("prompt").value.trim();
+      if (!prompt) { alert("Digite um prompt."); return; }
+      const payload = { prompt, context: getContext() };
+      $("rawReq").textContent = JSON.stringify(payload, null, 2);
+
+      const btn = $("btnSend"), status = $("sendStatus");
+      btn.disabled = true;
+      btn.innerHTML = '<span class="spinner"></span> Enviando…';
+      status.textContent = "aguardando a IA responder (pode levar alguns segundos)…";
+      $("responseBox").textContent = "";
+      $("metaBox").innerHTML = "";
+      const t0 = performance.now();
+      try {
+        const r = await fetch(base() + "/chat", {
+          method: "POST", headers: headers(), body: JSON.stringify(payload),
+        });
+        const elapsed = ((performance.now() - t0) / 1000).toFixed(1);
+        const text = await r.text();
+        let j; try { j = JSON.parse(text); } catch { j = { raw: text }; }
+        $("rawResp").textContent = JSON.stringify(j, null, 2);
+
+        if (r.ok) {
+          $("responseBox").textContent = j.response ?? "(sem campo 'response')";
+          $("metaBox").innerHTML =
+            `<span class="badge ok">HTTP ${r.status}</span>` +
+            `<span>⏱️ servidor: ${j.elapsed_seconds ?? "?"}s</span>` +
+            `<span>🌐 total: ${elapsed}s</span>`;
+        } else {
+          $("responseBox").textContent = "❌ " + (j.detail || text || "erro");
+          $("metaBox").innerHTML = `<span class="badge err">HTTP ${r.status}</span>`;
+        }
+      } catch (e) {
+        $("responseBox").textContent = "❌ Falha de conexão: " + e.message +
+          "\n\nVerifique a Base URL e se a API está no ar.";
+        $("metaBox").innerHTML = `<span class="badge err">erro de rede</span>`;
+      } finally {
+        btn.disabled = false; btn.innerHTML = "▶ Enviar para /chat"; status.textContent = "";
+      }
+    };
+
+    // Inicialização
+    checkHealth();
+  </script>
+</body>
+</html>

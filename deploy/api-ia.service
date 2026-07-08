@@ -1,0 +1,18 @@
+[Unit]
+Description=API-IA (ChatGPT via Selenium)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=apiia
+WorkingDirectory=/opt/api-ia
+EnvironmentFile=/opt/api-ia/.env
+ExecStart=/opt/api-ia/run.sh
+Restart=always
+RestartSec=5
+# Necessário para o Chrome não estourar memória compartilhada
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target
