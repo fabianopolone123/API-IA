@@ -479,8 +479,43 @@ Envia um prompt (e contexto opcional) ao ChatGPT e retorna a resposta.
 
 **Resposta (200):**
 ```json
-{ "response": "1. ...\n2. ...\n3. ...", "elapsed_seconds": 12.4 }
+{ "response": "1. ...\n2. ...\n3. ...", "elapsed_seconds": 12.4, "data": null }
 ```
+
+| Campo | Tipo | Descrição |
+|-------|------|-----------|
+| `response` | string | Texto **bruto** devolvido pela IA. |
+| `elapsed_seconds` | número | Tempo que o servidor levou para obter a resposta. |
+| `data` | objeto \| null | Se a resposta da IA for um **JSON válido**, vem aqui já parseado; senão, `null`. |
+
+#### 🎯 Modo roteamento / resposta em JSON (`data`)
+
+Você pode instruir o ChatGPT (no próprio `prompt`/`context`) a responder em **JSON puro** — ótimo
+para **identificar o setor** de atendimento e integrar com outro sistema. A API detecta o JSON
+(inclusive quando vem embrulhado em ` ```json ... ``` `) e o devolve pronto no campo `data`.
+
+Exemplo de `prompt` (primeiro atendimento que classifica o setor):
+```
+Você é um atendente virtual. Identifique para qual setor encaminhar o cliente.
+Setores: financeiro, RH, compras.
+Analise o contexto abaixo e responda SOMENTE em JSON válido, sem texto antes/depois.
+Se identificar: {"setor": "financeiro"}
+Se não identificar: {"mensagem": "Sobre o que você precisa falar?"}
+
+Contexto:
+Cliente: preciso resolver uma fatura em aberto.
+Cliente: quero falar com o atendente.
+```
+Resposta da API:
+```json
+{
+  "response": "{\"setor\": \"financeiro\"}",
+  "elapsed_seconds": 4.1,
+  "data": { "setor": "financeiro" }
+}
+```
+No seu sistema, basta ler `data.setor` (ou `data.mensagem`) e fazer a transferência.
+> Dica: mande todo o histórico dentro do `prompt` (ou no `context`) — a IA usa isso para decidir.
 
 **Códigos de erro:**
 | Código | Significado |

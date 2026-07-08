@@ -22,8 +22,15 @@ class ChatRequest(BaseModel):
 
 
 class ChatResponse(BaseModel):
-    response: str = Field(..., description="Texto da resposta gerada pela IA.")
+    response: str = Field(..., description="Texto da resposta gerada pela IA (bruto).")
     elapsed_seconds: float
+    data: dict | None = Field(
+        default=None,
+        description=(
+            "Se a resposta da IA for um JSON válido, aqui vai o objeto já "
+            "parseado (ex.: {'setor': 'financeiro'}). Caso contrário, null."
+        ),
+    )
 
 
 class HealthResponse(BaseModel):

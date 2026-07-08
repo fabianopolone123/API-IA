@@ -70,6 +70,15 @@
     .badge { padding: 2px 8px; border-radius: 6px; font-size: 12px; font-weight: 600; }
     .badge.ok { background: rgba(16,163,127,.15); color: #4fd6b0; }
     .badge.err { background: rgba(229,83,75,.15); color: #f08a84; }
+    .data-card { margin-top: 12px; background: rgba(16,163,127,.08); border: 1px solid rgba(16,163,127,.35);
+                 border-radius: 9px; padding: 12px 14px; }
+    .data-card .dtitle { font-size: 12px; text-transform: uppercase; letter-spacing: .04em; color: #4fd6b0;
+                         font-weight: 700; margin-bottom: 8px; }
+    .data-row { display: flex; gap: 8px; font-size: 14px; padding: 3px 0; }
+    .data-row .k { color: var(--muted); min-width: 90px; }
+    .data-row .v { color: var(--text); font-weight: 600; word-break: break-word; }
+    .chip { display: inline-block; background: var(--accent); color: #04120d; font-weight: 700;
+            padding: 3px 10px; border-radius: 999px; font-size: 13px; }
     details { margin-top: 12px; }
     details summary { cursor: pointer; color: var(--muted); font-size: 13px; }
     pre { background: #0b0d11; border: 1px solid var(--border); border-radius: 8px; padding: 12px;
@@ -126,6 +135,7 @@
     <section class="card">
       <h2>Resposta</h2>
       <div class="response" id="responseBox">A resposta da IA aparecerá aqui.</div>
+      <div id="dataBox"></div>
       <div class="meta" id="metaBox"></div>
       <details>
         <summary>Ver requisição e resposta cruas (JSON)</summary>
@@ -204,8 +214,22 @@
     // ---- Enviar /chat ----
     $("btnClear").onclick = () => {
       $("responseBox").textContent = "A resposta da IA aparecerá aqui.";
-      $("metaBox").innerHTML = ""; $("rawReq").textContent = "—"; $("rawResp").textContent = "—";
+      $("metaBox").innerHTML = ""; $("dataBox").innerHTML = "";
+      $("rawReq").textContent = "—"; $("rawResp").textContent = "—";
     };
+
+    function renderData(data) {
+      const box = $("dataBox");
+      box.innerHTML = "";
+      if (!data || typeof data !== "object") return;
+      const rows = Object.entries(data).map(([k, v]) => {
+        const val = (k === "setor")
+          ? `<span class="chip">${String(v)}</span>`
+          : `<span class="v">${String(v)}</span>`;
+        return `<div class="data-row"><span class="k">${k}</span>${val}</div>`;
+      }).join("");
+      box.innerHTML = `<div class="data-card"><div class="dtitle">📦 Dados estruturados (data)</div>${rows}</div>`;
+    }
 
     $("btnSend").onclick = async () => {
       const prompt = $("prompt").value.trim();
@@ -218,7 +242,7 @@
       btn.innerHTML = '<span class="spinner"></span> Enviando…';
       status.textContent = "aguardando a IA responder (pode levar alguns segundos)…";
       $("responseBox").textContent = "";
-      $("metaBox").innerHTML = "";
+      $("metaBox").innerHTML = ""; $("dataBox").innerHTML = "";
       const t0 = performance.now();
       try {
         const r = await fetch(base() + "/chat", {
@@ -231,10 +255,12 @@
 
         if (r.ok) {
           $("responseBox").textContent = j.response ?? "(sem campo 'response')";
+          renderData(j.data);
           $("metaBox").innerHTML =
             `<span class="badge ok">HTTP ${r.status}</span>` +
             `<span>⏱️ servidor: ${j.elapsed_seconds ?? "?"}s</span>` +
-            `<span>🌐 total: ${elapsed}s</span>`;
+            `<span>🌐 total: ${elapsed}s</span>` +
+            (j.data ? `<span>✅ JSON detectado</span>` : `<span>ℹ️ resposta em texto</span>`);
         } else {
           $("responseBox").textContent = "❌ " + (j.detail || text || "erro");
           $("metaBox").innerHTML = `<span class="badge err">HTTP ${r.status}</span>`;
