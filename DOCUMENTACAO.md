@@ -575,6 +575,7 @@ CHROME_BINARY=           # caminho do Chrome; em produção: /usr/bin/google-chr
 USER_DATA_DIR=           # perfil persistente (mantém cookies entre reinícios). Ex.: /opt/api-ia/chrome-profile
 WINDOW_SIZE=1280,900     # tamanho da janela (vira 1280x900x24 no Xvfb)
 USER_AGENT=              # user-agent custom (vazio = padrão do Chrome)
+RESET_CONVERSATION=true  # true=conversa nova a cada req. (estável); false=reusa a aba (mais rápido)
 
 # --- Timeouts (segundos) ---
 PAGE_LOAD_TIMEOUT=60         # carregamento da página

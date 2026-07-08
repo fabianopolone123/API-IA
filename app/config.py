@@ -24,6 +24,11 @@ class Settings(BaseSettings):
     window_size: str = "1280,900"
     # user-agent customizado (vazio = usa o padrão do Chrome)
     user_agent: str = ""
+    # recarrega a página a cada requisição (conversa nova e limpa).
+    #   true  = mais estável: evita o limite de mensagens por conversa do
+    #           ChatGPT deslogado (custa ~alguns segundos de reload por chamada)
+    #   false = mais rápido: reaproveita a mesma aba, mas atinge o limite mais cedo
+    reset_conversation: bool = True
 
     # ---- Timeouts (segundos) ----
     page_load_timeout: int = 60

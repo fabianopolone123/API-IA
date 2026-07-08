@@ -59,11 +59,14 @@ class ChatGPTClient:
         with self._lock:
             if self._driver is None:
                 raise RuntimeError("Browser não iniciado")
-            # Inicia uma conversa NOVA a cada requisição. O ChatGPT deslogado
-            # limita a quantidade de mensagens por conversa; como todo o contexto
-            # já é embutido no próprio prompt, recarregar garante um estado limpo
-            # e evita que a aba "trave" depois de algumas mensagens.
-            self._reset_conversation()
+            # Se habilitado (padrão), inicia uma conversa NOVA a cada requisição.
+            # O ChatGPT deslogado limita a quantidade de mensagens por conversa;
+            # como todo o contexto já é embutido no próprio prompt, recarregar
+            # garante um estado limpo e evita que a aba "trave" após algumas
+            # mensagens. Pode ser desligado (RESET_CONVERSATION=false) para ganhar
+            # velocidade reaproveitando a aba.
+            if settings.reset_conversation:
+                self._reset_conversation()
             full_prompt = self._build_prompt(prompt, context)
             return self._send_and_wait(full_prompt)
 
